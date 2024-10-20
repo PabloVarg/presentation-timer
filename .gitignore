@@ -1,0 +1,6 @@
+# Temporary directories
+tmp/
+
+# Environment files
+configs/envs/*.env
+!configs/envs/*.env.example
