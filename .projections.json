@@ -1,5 +1,6 @@
 {
     "*": {
-        "start": "make dev-start"
+        "start": "make dev-start",
+        "make": "go generate ./..."
     }
 }
