@@ -4,7 +4,7 @@ ENV_SUFFIX=".env.example"
 
 .PHONY: dev-start
 dev-start:
-	@ air & docker compose up --remove-orphans
+	@ docker compose up --remove-orphans --build
 	@ docker compose down --remove-orphans
 
 .PHONY: env
