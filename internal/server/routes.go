@@ -5,8 +5,10 @@ import (
 	"net/http"
 )
 
-func routes(_ *slog.Logger) *http.ServeMux {
+func routes(logger *slog.Logger) *http.ServeMux {
 	mux := http.NewServeMux()
+
+	mux.Handle("POST /presentations", CreatePresentationHandler(logger))
 
 	return mux
 }
