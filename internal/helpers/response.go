@@ -9,9 +9,23 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+type UnprocessableErrorResponse struct {
+	ErrorResponse
+	Messages map[string][]string `json:"messages"`
+}
+
 func BadRequest(w http.ResponseWriter, message string) {
 	WriteJSON(w, http.StatusBadRequest, ErrorResponse{
 		Error: message,
+	})
+}
+
+func UnprocessableContent(w http.ResponseWriter, messages map[string][]string) {
+	WriteJSON(w, http.StatusUnprocessableEntity, UnprocessableErrorResponse{
+		ErrorResponse: ErrorResponse{
+			Error: "content is not valid",
+		},
+		Messages: messages,
 	})
 }
 

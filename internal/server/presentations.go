@@ -8,6 +8,7 @@ import (
 
 	"github.com/PabloVarg/presentation-timer/internal/helpers"
 	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
+	"github.com/PabloVarg/presentation-timer/internal/validation"
 )
 
 func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
@@ -20,6 +21,19 @@ func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) ht
 
 		if err := helpers.ReadJSON(r.Body, &input); err != nil {
 			helpers.BadRequest(w, err.Error())
+			return
+		}
+
+		v := validation.New()
+		v.Check(
+			"name",
+			input.Name,
+			validation.CheckNotEmpty("name can't be empty"),
+			validation.CheckLength(5, 50, "name must be between 5 and 50 characters"),
+		)
+
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
 			return
 		}
 
