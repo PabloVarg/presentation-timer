@@ -31,7 +31,6 @@ func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) ht
 			validation.CheckNotEmpty("name can't be empty"),
 			validation.CheckLength(5, 50, "name must be between 5 and 50 characters"),
 		)
-
 		if !v.Valid() {
 			helpers.UnprocessableContent(w, v.Errors())
 			return
