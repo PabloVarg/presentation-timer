@@ -4,17 +4,23 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
+
+	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 )
 
-func ListenAndServe(ctx context.Context, addr string, logger *slog.Logger) {
+func ListenAndServe(ctx context.Context, wg *sync.WaitGroup, addr string, logger *slog.Logger, queries *queries.Queries) {
 	server := http.Server{
 		Addr:         addr,
-		Handler:      routes(logger),
+		Handler:      routes(logger, queries),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  time.Minute,
 	}
+
+	wg.Add(1)
+	go closeServer(ctx, wg, logger, &server)
 
 	logger.InfoContext(ctx, "server listening", "on", addr)
 	if err := server.ListenAndServe(); err != nil {
@@ -23,7 +29,9 @@ func ListenAndServe(ctx context.Context, addr string, logger *slog.Logger) {
 	}
 }
 
-func closeServer(ctx context.Context, logger *slog.Logger, server *http.Server) {
+func closeServer(ctx context.Context, wg *sync.WaitGroup, logger *slog.Logger, server *http.Server) {
+	defer wg.Done()
+
 	<-ctx.Done()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
