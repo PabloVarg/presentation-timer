@@ -3,7 +3,7 @@ package validation
 func checkString(value any) string {
 	result, ok := value.(string)
 	if !ok {
-		panic("validating wrong value types")
+		panic("validating wrong types")
 	}
 
 	return result
