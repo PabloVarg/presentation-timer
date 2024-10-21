@@ -20,7 +20,7 @@ func WriteJSON(w http.ResponseWriter, status int, data any) error {
 
 func ReadJSON(r io.Reader, data any) error {
 	if err := json.NewDecoder(r).Decode(data); err != nil {
-		return fmt.Errorf("malformed input [%w]", err)
+		return fmt.Errorf("malformed input (%w)", err)
 	}
 	return nil
 }
