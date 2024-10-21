@@ -15,8 +15,7 @@ INSERT INTO presentation(
 ) VALUES (
     $1
 )
-RETURNING
-    id, name
+RETURNING id, name
 `
 
 func (q *Queries) CreatePresentation(ctx context.Context, name string) (Presentation, error) {

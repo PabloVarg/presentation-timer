@@ -10,8 +10,7 @@ INSERT INTO presentation(
 ) VALUES (
     @name
 )
-RETURNING
-    *;
+RETURNING *;
 --
 -- name: GetPresentation :one
 SELECT
