@@ -1,5 +1,6 @@
-ENV_DIR="./configs/envs"
+ENV_DIR="configs/envs"
 ENV_SUFFIX=".env.example"
+MIGRATIONS_DIR="migrations/"
 
 
 .PHONY: dev-start
