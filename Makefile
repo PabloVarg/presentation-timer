@@ -22,3 +22,10 @@ migrations-up:
 		--dir "${MIGRATIONS_DIR}" \
 		postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSLMODE} password=${POSTGRES_PASSWORD} host=127.0.0.1" \
 		up
+
+.PHONY: migrations-down-last
+migrations-down-last:
+	@ goose \
+		--dir "${MIGRATIONS_DIR}" \
+		postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSLMODE} password=${POSTGRES_PASSWORD} host=127.0.0.1" \
+		down 1
