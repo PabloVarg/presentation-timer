@@ -31,7 +31,7 @@ func ListPresentationsHandler(logger *slog.Logger, queries *queries.Queries) htt
 	})
 }
 
-func ListPresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+func GetPresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ID, v := helpers.ParseID(r, "id")
 		if !v.Valid() {
