@@ -51,3 +51,28 @@ func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) ht
 		}
 	})
 }
+
+func DeletePresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		rows, err := queries.DeletePresentation(ctx, ID)
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+		if rows == 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+}
