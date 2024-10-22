@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -23,6 +25,35 @@ func ListPresentationsHandler(logger *slog.Logger, queries *queries.Queries) htt
 		}
 
 		if err := helpers.WriteJSON(w, http.StatusOK, presentations); err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+	})
+}
+
+func ListPresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		presentation, err := queries.GetPresentation(ctx, ID)
+		if err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				http.NotFound(w, r)
+			default:
+				helpers.InternalError(w, logger, err)
+			}
+			return
+		}
+
+		if err := helpers.WriteJSON(w, http.StatusOK, presentation); err != nil {
 			helpers.InternalError(w, logger, err)
 			return
 		}
