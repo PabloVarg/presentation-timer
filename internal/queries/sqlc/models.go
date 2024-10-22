@@ -4,7 +4,19 @@
 
 package queries
 
+import (
+	"time"
+)
+
 type Presentation struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
+}
+
+type Section struct {
+	ID           int64         `json:"id"`
+	Presentation *int64        `json:"presentation"`
+	Name         string        `json:"name"`
+	Duration     time.Duration `json:"duration"`
+	Position     int16         `json:"position"`
 }
