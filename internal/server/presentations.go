@@ -11,6 +11,24 @@ import (
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 )
 
+func ListPresentationsHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		presentations, err := queries.GetPresentations(ctx)
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+
+		if err := helpers.WriteJSON(w, http.StatusOK, presentations); err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+	})
+}
+
 func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
 	type Input struct {
 		Name string `json:"name"`
