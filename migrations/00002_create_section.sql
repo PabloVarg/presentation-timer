@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE section (
     id BIGSERIAL PRIMARY KEY,
-    presentation BIGINT REFERENCES presentation(id) ON DELETE CASCADE,
+    presentation BIGINT NOT NULL REFERENCES presentation(id) ON DELETE CASCADE,
 
     name TEXT NOT NULL,
     duration INTERVAL NOT NULL,
