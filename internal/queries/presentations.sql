@@ -1,8 +1,7 @@
 -- name: GetPresentations :many
-SELECT
-    *
-FROM
-    presentation;
+select *
+from presentation
+;
 --
 -- name: CreatePresentation :one
 INSERT INTO presentation(
@@ -13,9 +12,12 @@ INSERT INTO presentation(
 RETURNING *;
 --
 -- name: GetPresentation :one
-SELECT
-    *
-FROM
-    presentation
-WHERE
-    id = @id;
+select *
+from presentation
+where id = @id
+;
+--
+-- name: DeletePresentation :execrows
+delete from presentation
+where id = @id
+;
