@@ -30,6 +30,10 @@ func (v Validator) AddErrors(key string, messages ...string) {
 }
 
 func (v Validator) SetErrors(key string, messages ...string) {
+	if len(messages) == 0 {
+		return
+	}
+
 	v.errors[key] = messages
 }
 
