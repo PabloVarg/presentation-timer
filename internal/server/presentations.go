@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/PabloVarg/presentation-timer/internal/helpers"
-	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
+	"github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 )
 
-func ListPresentationsHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		presentations, err := queries.GetPresentations(ctx)
+		presentations, err := queriesStore.GetPresentations(ctx)
 		if err != nil {
 			helpers.InternalError(w, logger, err)
 			return
@@ -31,7 +31,7 @@ func ListPresentationsHandler(logger *slog.Logger, queries *queries.Queries) htt
 	})
 }
 
-func GetPresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+func GetPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ID, v := helpers.ParseID(r, "id")
 		if !v.Valid() {
@@ -42,7 +42,7 @@ func GetPresentationHandler(logger *slog.Logger, queries *queries.Queries) http.
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		presentation, err := queries.GetPresentation(ctx, ID)
+		presentation, err := queriesStore.GetPresentation(ctx, ID)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -60,7 +60,7 @@ func GetPresentationHandler(logger *slog.Logger, queries *queries.Queries) http.
 	})
 }
 
-func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type Input struct {
 		Name string `json:"name"`
 	}
@@ -88,7 +88,7 @@ func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) ht
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		presentation, err := queries.CreatePresentation(ctx, input.Name)
+		presentation, err := queriesStore.CreatePresentation(ctx, input.Name)
 		if err != nil {
 			helpers.InternalError(w, logger, err)
 			return
@@ -101,7 +101,7 @@ func CreatePresentationHandler(logger *slog.Logger, queries *queries.Queries) ht
 	})
 }
 
-func DeletePresentationHandler(logger *slog.Logger, queries *queries.Queries) http.Handler {
+func DeletePresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ID, v := helpers.ParseID(r, "id")
 		if !v.Valid() {
@@ -112,7 +112,7 @@ func DeletePresentationHandler(logger *slog.Logger, queries *queries.Queries) ht
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		rows, err := queries.DeletePresentation(ctx, ID)
+		rows, err := queriesStore.DeletePresentation(ctx, ID)
 		if err != nil {
 			helpers.InternalError(w, logger, err)
 			return

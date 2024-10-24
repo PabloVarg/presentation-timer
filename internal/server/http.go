@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
+	"github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 )
 
-func ListenAndServe(ctx context.Context, wg *sync.WaitGroup, addr string, logger *slog.Logger, queries *queries.Queries) {
+func ListenAndServe(ctx context.Context, wg *sync.WaitGroup, addr string, logger *slog.Logger, queriesStore *queries.Queries) {
 	server := http.Server{
 		Addr:         addr,
-		Handler:      routes(logger, queries),
+		Handler:      routes(logger, queriesStore),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  time.Minute,

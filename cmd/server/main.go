@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
+	"github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 	"github.com/PabloVarg/presentation-timer/internal/server"
 	"github.com/jackc/pgx/v5"
 )
@@ -32,7 +32,7 @@ func run(logger *slog.Logger) {
 		return
 	}
 
-	queries, conn, err := createQueries(ctx)
+	queriesStore, conn, err := createQueries(ctx)
 	if err != nil {
 		logger.ErrorContext(ctx, "error connecting to DB", "err", err)
 		return
@@ -47,7 +47,7 @@ func run(logger *slog.Logger) {
 		conn.Close(closeCtx)
 	}()
 
-	server.ListenAndServe(ctx, &wg, fmt.Sprintf(":%s", port), logger, queries)
+	server.ListenAndServe(ctx, &wg, fmt.Sprintf(":%s", port), logger, queriesStore)
 
 	logger.Info("closing resources")
 	wg.Wait()
