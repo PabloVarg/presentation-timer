@@ -11,7 +11,7 @@ func checkString(value any) string {
 	return result
 }
 
-func CheckNotEmpty(message string) ValidationFunc {
+func StringCheckNotEmpty(message string) ValidationFunc {
 	return func(value any) (bool, string) {
 		strValue := checkString(value)
 
@@ -19,7 +19,7 @@ func CheckNotEmpty(message string) ValidationFunc {
 	}
 }
 
-func CheckEmpty(message string) ValidationFunc {
+func StringCheckEmpty(message string) ValidationFunc {
 	return func(value any) (bool, string) {
 		strValue := checkString(value)
 
@@ -27,7 +27,7 @@ func CheckEmpty(message string) ValidationFunc {
 	}
 }
 
-func CheckLength(minLength, maxLength int, message string) ValidationFunc {
+func StringCheckLength(minLength, maxLength int, message string) ValidationFunc {
 	return func(value any) (bool, string) {
 		strValue := checkString(value)
 		runeCount := utf8.RuneCountInString(strValue)
@@ -36,7 +36,7 @@ func CheckLength(minLength, maxLength int, message string) ValidationFunc {
 	}
 }
 
-func CheckMinLen(minLength int, message string) ValidationFunc {
+func StringCheckMinLen(minLength int, message string) ValidationFunc {
 	return func(value any) (bool, string) {
 		strValue := checkString(value)
 
@@ -44,7 +44,7 @@ func CheckMinLen(minLength int, message string) ValidationFunc {
 	}
 }
 
-func CheckMaxLen(maxLength int, message string) ValidationFunc {
+func StringCheckMaxLen(maxLength int, message string) ValidationFunc {
 	return func(value any) (bool, string) {
 		strValue := checkString(value)
 

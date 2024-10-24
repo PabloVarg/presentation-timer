@@ -15,7 +15,7 @@ func ParseID(r *http.Request, key string) (int64, validation.Validator) {
 	v.Check(
 		key,
 		strID,
-		validation.CheckNotEmpty(fmt.Sprintf("%s can not be empty", key)),
+		validation.StringCheckNotEmpty(fmt.Sprintf("%s can not be empty", key)),
 	)
 	if !v.Valid() {
 		return 0, v
