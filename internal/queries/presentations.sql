@@ -3,6 +3,12 @@ select *
 from presentation
 ;
 --
+-- name: GetPresentation :one
+select *
+from presentation
+where id = @id
+;
+--
 -- name: CreatePresentation :one
 INSERT INTO presentation(
     name
@@ -10,12 +16,6 @@ INSERT INTO presentation(
     @name
 )
 RETURNING *;
---
--- name: GetPresentation :one
-select *
-from presentation
-where id = @id
-;
 --
 -- name: DeletePresentation :execrows
 delete from presentation
