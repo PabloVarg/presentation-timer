@@ -81,8 +81,6 @@ func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 			default:
 				helpers.InternalError(w, logger, err)
 			}
-
-			log.Println(pgErr.ConstraintName)
 			return
 		}
 
