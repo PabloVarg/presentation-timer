@@ -10,3 +10,8 @@ INSERT INTO section (
     @duration,
     @position
 ) RETURNING *;
+--
+-- name: DeleteSection :execrows
+delete from section
+where id = @id
+;

@@ -7,6 +7,7 @@ package queries
 
 import (
 	"context"
+
 	"time"
 )
 
@@ -47,4 +48,17 @@ func (q *Queries) CreateSection(ctx context.Context, arg CreateSectionParams) (S
 		&i.Position,
 	)
 	return i, err
+}
+
+const deleteSection = `-- name: DeleteSection :execrows
+delete from section
+where id = $1
+`
+
+func (q *Queries) DeleteSection(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteSection, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
