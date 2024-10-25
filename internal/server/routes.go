@@ -15,6 +15,7 @@ func routes(logger *slog.Logger, queries *queries.Queries) *http.ServeMux {
 	mux.Handle("POST /presentations", CreatePresentationHandler(logger, queries))
 	mux.Handle("DELETE /presentations/{id}", DeletePresentationHandler(logger, queries))
 
+	mux.Handle("GET /sections/{id}", GetSectionHandler(logger, queries))
 	mux.Handle("POST /sections", CreateSectionHandler(logger, queries))
 	mux.Handle("DELETE /sections/{id}", DeleteSectionHandler(logger, queries))
 

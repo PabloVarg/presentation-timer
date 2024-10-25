@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"log"
 	"log/slog"
 	"net/http"
 	"time"
@@ -13,6 +13,35 @@ import (
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 	"github.com/jackc/pgx/v5/pgconn"
 )
+
+func GetSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		section, err := queriesStore.GetSection(ctx, ID)
+		if err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				http.NotFound(w, r)
+			default:
+				helpers.InternalError(w, logger, err)
+			}
+			return
+		}
+
+		if err := helpers.WriteJSON(w, http.StatusOK, section); err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+	})
+}
 
 func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type input struct {

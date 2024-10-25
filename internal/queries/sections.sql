@@ -1,3 +1,9 @@
+-- name: GetSection :one
+select *
+from section
+where id = @id
+;
+--
 -- name: CreateSection :one
 INSERT INTO section (
     presentation,

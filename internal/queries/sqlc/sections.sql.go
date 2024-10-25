@@ -62,3 +62,22 @@ func (q *Queries) DeleteSection(ctx context.Context, id int64) (int64, error) {
 	}
 	return result.RowsAffected(), nil
 }
+
+const getSection = `-- name: GetSection :one
+select id, presentation, name, duration, position
+from section
+where id = $1
+`
+
+func (q *Queries) GetSection(ctx context.Context, id int64) (Section, error) {
+	row := q.db.QueryRow(ctx, getSection, id)
+	var i Section
+	err := row.Scan(
+		&i.ID,
+		&i.Presentation,
+		&i.Name,
+		&i.Duration,
+		&i.Position,
+	)
+	return i, err
+}
