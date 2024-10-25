@@ -1,9 +1,10 @@
 package validation
 
-import "reflect"
-
 func checkInt(value any) int64 {
-	reflectValue := reflect.ValueOf(value)
+	reflectValue := extractValue(value)
+	if reflectValue.IsZero() {
+		return 0
+	}
 
 	return reflectValue.Int()
 }

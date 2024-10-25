@@ -1,14 +1,17 @@
 package validation
 
-import "unicode/utf8"
+import (
+	"reflect"
+	"unicode/utf8"
+)
 
 func checkString(value any) string {
-	result, ok := value.(string)
-	if !ok {
-		panic("validating wrong types")
+	reflectValue := extractValue(value)
+	if extractValue(value).Kind() != reflect.String {
+		return ""
 	}
 
-	return result
+	return reflectValue.String()
 }
 
 func StringCheckNotEmpty(message string) ValidationFunc {

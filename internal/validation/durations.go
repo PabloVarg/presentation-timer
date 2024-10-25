@@ -3,12 +3,12 @@ package validation
 import "time"
 
 func checkDuration(value any) time.Duration {
-	result, ok := value.(time.Duration)
+	v, ok := extractValue(value).Interface().(time.Duration)
 	if !ok {
-		panic("validating wrong types")
+		panic("incompatible types")
 	}
 
-	return result
+	return v
 }
 
 func DurationCheckPositive(message string) ValidationFunc {
