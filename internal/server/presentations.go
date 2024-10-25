@@ -62,7 +62,7 @@ func GetPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) 
 
 func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type Input struct {
-		Name string `json:"name"`
+		Name *string `json:"name"`
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +77,7 @@ func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 		v.Check(
 			"name",
 			input.Name,
+			validation.CheckPointerNotNil("name must be given"),
 			validation.StringCheckNotEmpty("name can't be empty"),
 			validation.StringCheckLength(5, 50, "name must be between 5 and 50 characters"),
 		)
@@ -88,7 +89,7 @@ func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		presentation, err := queriesStore.CreatePresentation(ctx, input.Name)
+		presentation, err := queriesStore.CreatePresentation(ctx, *input.Name)
 		if err != nil {
 			helpers.InternalError(w, logger, err)
 			return
