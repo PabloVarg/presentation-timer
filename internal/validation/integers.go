@@ -24,3 +24,11 @@ func IntCheckPositive(message string) ValidationFunc {
 		return intValue > 0, message
 	}
 }
+
+func IntCheckMax(maxValue int64, message string) ValidationFunc {
+	return func(value any) (bool, string) {
+		intValue := checkInt(value)
+
+		return intValue <= maxValue, message
+	}
+}
