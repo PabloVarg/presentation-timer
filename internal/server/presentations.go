@@ -19,6 +19,11 @@ const defaultPageSize = 20
 var validSortByFields = []string{"name"}
 
 func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
+	type output struct {
+		Data     []queries.Presentation `json:"data"`
+		PageInfo filters.PageInfo       `json:"page_info"`
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f, v := filters.FromRequest(r, defaultPageSize, validSortByFields...)
 		if !v.Valid() {
@@ -40,7 +45,16 @@ func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries
 			return
 		}
 
-		if err := helpers.WriteJSON(w, http.StatusOK, presentations); err != nil {
+		totalRows, err := queriesStore.GetPresentationsMetadata(ctx)
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+
+		if err := helpers.WriteJSON(w, http.StatusOK, output{
+			Data:     presentations,
+			PageInfo: f.PageInfo(totalRows),
+		}); err != nil {
 			helpers.InternalError(w, logger, err)
 			return
 		}

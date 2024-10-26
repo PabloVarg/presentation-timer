@@ -9,6 +9,11 @@ limit @query_limit
 offset @query_offset
 ;
 --
+-- name: GetPresentationsMetadata :one
+select count(*)
+from presentation
+;
+--
 -- name: GetPresentation :one
 select *
 from presentation
