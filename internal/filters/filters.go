@@ -1,6 +1,7 @@
 package filters
 
 import (
+	"math"
 	"net/http"
 	"strings"
 
@@ -13,6 +14,11 @@ type Filters struct {
 	PageSize       int32
 	SortBy         string
 	SafeSortFields []string
+}
+
+type PageInfo struct {
+	TotalPages int64 `json:"total_pages"`
+	TotalItems int64 `json:"total_items"`
 }
 
 func FromRequest(r *http.Request, defaultPageSize int32, safeSortFields ...string) (Filters, validation.Validator) {
@@ -60,6 +66,13 @@ func (f Filters) Validate(v validation.Validator) {
 		strings.TrimPrefix(f.SortBy, "-"),
 		validation.StringCheckIn(f.SafeSortFields, "invalid value"),
 	)
+}
+
+func (f Filters) PageInfo(totalRows int64) PageInfo {
+	return PageInfo{
+		TotalPages: int64(math.Ceil(float64(totalRows) / float64(f.PageSize))),
+		TotalItems: totalRows,
+	}
 }
 
 func (f Filters) QueryLimit() int32 {
