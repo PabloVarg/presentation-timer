@@ -8,11 +8,66 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/PabloVarg/presentation-timer/internal/filters"
 	"github.com/PabloVarg/presentation-timer/internal/helpers"
 	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 	"github.com/jackc/pgx/v5/pgconn"
 )
+
+const SectionsPageSize = 20
+
+var SectionsSortFields = []string{"name", "duration", "position"}
+
+func ListSectionsHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
+	type output struct {
+		Data     []queries.Section `json:"data"`
+		PageInfo filters.PageInfo  `json:"page_info"`
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		presentationID, v := helpers.ParseID(r, "presentation_id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		f, v := filters.FromRequest(r, SectionsPageSize, SectionsSortFields...)
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		sections, err := queriesStore.GetSections(ctx, queries.GetSectionsParams{
+			PresentationID: presentationID,
+			Direction:      f.QuerySortDirection(),
+			SortBy:         f.QuerySortBy(),
+			QueryLimit:     f.QueryLimit(),
+			QueryOffset:    f.QueryOffset(),
+		})
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+
+		totalRows, err := queriesStore.GetSectionsMetadata(ctx, presentationID)
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+
+		if err := helpers.WriteJSON(w, http.StatusOK, output{
+			Data:     sections,
+			PageInfo: f.PageInfo(totalRows),
+		}); err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+	})
+}
 
 func GetSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
