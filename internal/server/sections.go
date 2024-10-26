@@ -100,27 +100,26 @@ func GetSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.
 
 func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type input struct {
-		Presentation *int64         `json:"presentation"`
-		Name         *string        `json:"name"`
-		Duration     *time.Duration `json:"duration"`
-		Position     *int16         `json:"position"`
+		Name     *string        `json:"name"`
+		Duration *time.Duration `json:"duration"`
+		Position *int16         `json:"position"`
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var input input
+
+		presentationID, v := helpers.ParseID(r, "presentation_id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
 
 		if err := helpers.ReadJSON(r.Body, &input); err != nil {
 			helpers.BadRequest(w, err.Error())
 			return
 		}
 
-		v := validation.New()
-		v.Check(
-			"presentation",
-			input.Presentation,
-			validation.CheckPointerNotNil("presentation must be given"),
-			validation.IntCheckNatural("presentation can not be negative"),
-		)
+		v = validation.New()
 		v.Check(
 			"name",
 			input.Name,
@@ -150,7 +149,7 @@ func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 		defer cancel()
 
 		presentation, err := queriesStore.CreateSection(ctx, queries.CreateSectionParams{
-			Presentation: *input.Presentation,
+			Presentation: presentationID,
 			Name:         *input.Name,
 			Duration:     *input.Duration,
 			Position:     *input.Position,
