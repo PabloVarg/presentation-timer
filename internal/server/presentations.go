@@ -14,9 +14,9 @@ import (
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 )
 
-const defaultPageSize = 20
+const PresentationsPageSize = 20
 
-var validSortByFields = []string{"name"}
+var PresentationsSortFields = []string{"name"}
 
 func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type output struct {
@@ -25,7 +25,7 @@ func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		f, v := filters.FromRequest(r, defaultPageSize, validSortByFields...)
+		f, v := filters.FromRequest(r, PresentationsPageSize, PresentationsSortFields...)
 		if !v.Valid() {
 			helpers.UnprocessableContent(w, v.Errors())
 			return
