@@ -27,5 +27,11 @@ func ParseID(r *http.Request, key string) (int64, validation.Validator) {
 		return 0, v
 	}
 
+	v.Check(
+		key,
+		ID,
+		validation.IntCheckPositive(fmt.Sprintf("%s is not positive", key)),
+	)
+
 	return ID, v
 }
