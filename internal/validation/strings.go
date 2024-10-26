@@ -2,6 +2,7 @@ package validation
 
 import (
 	"reflect"
+	"slices"
 	"unicode/utf8"
 )
 
@@ -52,5 +53,13 @@ func StringCheckMaxLen(maxLength int, message string) ValidationFunc {
 		strValue := checkString(value)
 
 		return utf8.RuneCountInString(strValue) <= maxLength, message
+	}
+}
+
+func StringCheckIn(validValues []string, message string) ValidationFunc {
+	return func(value any) (bool, string) {
+		strValue := checkString(value)
+
+		return slices.Contains(validValues, strValue), message
 	}
 }
