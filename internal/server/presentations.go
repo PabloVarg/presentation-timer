@@ -8,17 +8,33 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/PabloVarg/presentation-timer/internal/filters"
 	"github.com/PabloVarg/presentation-timer/internal/helpers"
 	"github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 )
 
+const defaultPageSize = 20
+
+var validSortByFields = []string{"name"}
+
 func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		f, v := filters.FromRequest(r, defaultPageSize, validSortByFields...)
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		presentations, err := queriesStore.GetPresentations(ctx)
+		presentations, err := queriesStore.GetPresentations(ctx, queries.GetPresentationsParams{
+			Direction:   f.QuerySortDirection(),
+			SortBy:      f.QuerySortBy(),
+			QueryOffset: f.QueryOffset(),
+			QueryLimit:  f.QueryLimit(),
+		})
 		if err != nil {
 			helpers.InternalError(w, logger, err)
 			return

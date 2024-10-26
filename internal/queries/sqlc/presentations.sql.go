@@ -54,10 +54,28 @@ func (q *Queries) GetPresentation(ctx context.Context, id int64) (Presentation, 
 const getPresentations = `-- name: GetPresentations :many
 select id, name
 from presentation
+order by
+    case when $1::text = 'ASC' and $2::text <> '' then $2 end asc,
+    case when $1::text = 'DESC' and $2::text <> '' then $2 end desc,
+    id desc
+limit $4
+offset $3
 `
 
-func (q *Queries) GetPresentations(ctx context.Context) ([]Presentation, error) {
-	rows, err := q.db.Query(ctx, getPresentations)
+type GetPresentationsParams struct {
+	Direction   string `json:"direction"`
+	SortBy      string `json:"sort_by"`
+	QueryOffset int32  `json:"query_offset"`
+	QueryLimit  int32  `json:"query_limit"`
+}
+
+func (q *Queries) GetPresentations(ctx context.Context, arg GetPresentationsParams) ([]Presentation, error) {
+	rows, err := q.db.Query(ctx, getPresentations,
+		arg.Direction,
+		arg.SortBy,
+		arg.QueryOffset,
+		arg.QueryLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
