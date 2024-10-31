@@ -116,7 +116,7 @@ func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		presentation, err := queriesStore.CreatePresentation(ctx, *input.Name)
@@ -140,7 +140,7 @@ func DeletePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		rows, err := queriesStore.DeletePresentation(ctx, ID)
