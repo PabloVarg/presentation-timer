@@ -10,7 +10,7 @@ import (
 
 	"github.com/PabloVarg/presentation-timer/internal/filters"
 	"github.com/PabloVarg/presentation-timer/internal/helpers"
-	"github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
+	queries "github.com/PabloVarg/presentation-timer/internal/queries/sqlc"
 	"github.com/PabloVarg/presentation-timer/internal/validation"
 )
 
@@ -158,6 +158,50 @@ func PutPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) 
 		rows, err := queriesStore.UpdatePresentation(ctx, queries.UpdatePresentationParams{
 			ID:   ID,
 			Name: *input.Name,
+		})
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+		if rows == 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
+func PatchPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
+	type input struct {
+		Name *string
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var input input
+
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		if err := helpers.ReadJSON(r.Body, &input); err != nil {
+			helpers.BadRequest(w, err.Error())
+			return
+		}
+
+		v = validation.New()
+		if input.Name != nil {
+			ValidateName(v, input.Name)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		rows, err := queriesStore.PatchPresentation(ctx, queries.PatchPresentationParams{
+			ID:   ID,
+			Name: input.Name,
 		})
 		if err != nil {
 			helpers.InternalError(w, logger, err)
