@@ -1,0 +1,17 @@
+### Get all
+GET {{URL}}/presentations/35/sections
+
+### Get one
+GET {{URL}}/sections/13
+
+### Create
+POST {{URL}}/presentations/35/sections
+
+{
+    "name": "my section",
+    "duration": 300000000000,
+    "position": 1
+}
+
+### Delete
+DELETE {{URL}}/sections/16
