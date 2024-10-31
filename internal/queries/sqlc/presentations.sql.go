@@ -106,6 +106,25 @@ func (q *Queries) GetPresentationsMetadata(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const patchPresentation = `-- name: PatchPresentation :execrows
+UPDATE presentation
+SET name = COALESCE($1, name)
+WHERE id = $2
+`
+
+type PatchPresentationParams struct {
+	Name *string `json:"name"`
+	ID   int64   `json:"id"`
+}
+
+func (q *Queries) PatchPresentation(ctx context.Context, arg PatchPresentationParams) (int64, error) {
+	result, err := q.db.Exec(ctx, patchPresentation, arg.Name, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const updatePresentation = `-- name: UpdatePresentation :execrows
 UPDATE presentation
 SET name = $1

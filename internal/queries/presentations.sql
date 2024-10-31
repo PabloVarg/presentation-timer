@@ -33,6 +33,11 @@ UPDATE presentation
 SET name = @name
 WHERE id = @id;
 --
+-- name: PatchPresentation :execrows
+UPDATE presentation
+SET name = COALESCE(sqlc.narg('name'), name)
+WHERE id = @id;
+--
 -- name: DeletePresentation :execrows
 delete from presentation
 where id = @id
