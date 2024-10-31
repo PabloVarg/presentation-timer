@@ -105,3 +105,22 @@ func (q *Queries) GetPresentationsMetadata(ctx context.Context) (int64, error) {
 	err := row.Scan(&count)
 	return count, err
 }
+
+const updatePresentation = `-- name: UpdatePresentation :execrows
+UPDATE presentation
+SET name = $1
+WHERE id = $2
+`
+
+type UpdatePresentationParams struct {
+	Name string `json:"name"`
+	ID   int64  `json:"id"`
+}
+
+func (q *Queries) UpdatePresentation(ctx context.Context, arg UpdatePresentationParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updatePresentation, arg.Name, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

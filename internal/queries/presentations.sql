@@ -28,6 +28,11 @@ INSERT INTO presentation(
 )
 RETURNING *;
 --
+-- name: UpdatePresentation :execrows
+UPDATE presentation
+SET name = @name
+WHERE id = @id;
+--
 -- name: DeletePresentation :execrows
 delete from presentation
 where id = @id
