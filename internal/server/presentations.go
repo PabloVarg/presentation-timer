@@ -126,6 +126,52 @@ func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 	})
 }
 
+func PutPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
+	type Input struct {
+		Name *string `json:"name"`
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var input Input
+
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		if err := helpers.ReadJSON(r.Body, &input); err != nil {
+			helpers.BadRequest(w, err.Error())
+			return
+		}
+
+		v = validation.New()
+		ValidateName(v, input.Name)
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		rows, err := queriesStore.UpdatePresentation(ctx, queries.UpdatePresentationParams{
+			ID:   ID,
+			Name: *input.Name,
+		})
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+		if rows == 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
 func DeletePresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ID, v := helpers.ParseID(r, "id")
