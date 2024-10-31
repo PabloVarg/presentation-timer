@@ -104,13 +104,7 @@ func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 		}
 
 		v := validation.New()
-		v.Check(
-			"name",
-			input.Name,
-			validation.CheckPointerNotNil("name must be given"),
-			validation.StringCheckNotEmpty("name can't be empty"),
-			validation.StringCheckLength(5, 50, "name must be between 5 and 50 characters"),
-		)
+		ValidateName(v, input.Name)
 		if !v.Valid() {
 			helpers.UnprocessableContent(w, v.Errors())
 			return
