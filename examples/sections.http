@@ -22,5 +22,12 @@ PUT {{URL}}/sections/17
     "position": 2
 }
 
+### Patch
+PATCH {{URL}}/sections/17
+
+{
+    "position": 4
+}
+
 ### Delete
 DELETE {{URL}}/sections/16
