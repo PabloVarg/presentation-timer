@@ -120,26 +120,9 @@ func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 		}
 
 		v = validation.New()
-		v.Check(
-			"name",
-			input.Name,
-			validation.CheckPointerNotNil("name must be given"),
-			validation.StringCheckNotEmpty("name can not be empty"),
-			validation.StringCheckLength(5, 50, "name must be between 5 and 50 characters"),
-		)
-		v.Check(
-			"duration",
-			input.Duration,
-			validation.CheckPointerNotNil("duration must be given"),
-			validation.DurationCheckPositive("duration can not be negative"),
-			validation.DurationCheckMin("duration can not be less than 1 second", time.Second),
-		)
-		v.Check(
-			"position",
-			input.Position,
-			validation.CheckPointerNotNil("position must be given"),
-			validation.IntCheckNatural("position can not be negative"),
-		)
+		ValidateSectionName(v, input.Name)
+		ValidateDuration(v, input.Duration)
+		ValidatePosition(v, input.Position)
 		if !v.Valid() {
 			helpers.UnprocessableContent(w, v.Errors())
 			return
