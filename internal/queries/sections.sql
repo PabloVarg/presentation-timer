@@ -35,6 +35,15 @@ INSERT INTO section (
     @position
 ) RETURNING *;
 --
+-- name: UpdateSection :execrows
+UPDATE section
+SET
+    name = @name,
+    duration = @duration,
+    position = @position
+WHERE
+    id = @id;
+--
 -- name: DeleteSection :execrows
 delete from section
 where id = @id

@@ -146,3 +146,33 @@ func (q *Queries) GetSectionsMetadata(ctx context.Context, presentationID int64)
 	err := row.Scan(&count)
 	return count, err
 }
+
+const updateSection = `-- name: UpdateSection :execrows
+UPDATE section
+SET
+    name = $1,
+    duration = $2,
+    position = $3
+WHERE
+    id = $4
+`
+
+type UpdateSectionParams struct {
+	Name     string        `json:"name"`
+	Duration time.Duration `json:"duration"`
+	Position int16         `json:"position"`
+	ID       int64         `json:"id"`
+}
+
+func (q *Queries) UpdateSection(ctx context.Context, arg UpdateSectionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateSection,
+		arg.Name,
+		arg.Duration,
+		arg.Position,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
