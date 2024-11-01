@@ -2,7 +2,7 @@ package server
 
 import "github.com/PabloVarg/presentation-timer/internal/validation"
 
-func ValidateName(v validation.Validator, name *string) {
+func ValidatePresentationName(v validation.Validator, name *string) {
 	v.Check(
 		"name",
 		name,

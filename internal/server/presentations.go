@@ -104,7 +104,7 @@ func CreatePresentationHandler(logger *slog.Logger, queriesStore *queries.Querie
 		}
 
 		v := validation.New()
-		ValidateName(v, input.Name)
+		ValidatePresentationName(v, input.Name)
 		if !v.Valid() {
 			helpers.UnprocessableContent(w, v.Errors())
 			return
@@ -146,7 +146,7 @@ func PutPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) 
 		}
 
 		v = validation.New()
-		ValidateName(v, input.Name)
+		ValidatePresentationName(v, input.Name)
 		if !v.Valid() {
 			helpers.UnprocessableContent(w, v.Errors())
 			return
@@ -174,7 +174,7 @@ func PutPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) 
 
 func PatchPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type input struct {
-		Name *string
+		Name *string `json:"name"`
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -193,7 +193,7 @@ func PatchPresentationHandler(logger *slog.Logger, queriesStore *queries.Queries
 
 		v = validation.New()
 		if input.Name != nil {
-			ValidateName(v, input.Name)
+			ValidatePresentationName(v, input.Name)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
