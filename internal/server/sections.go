@@ -157,6 +157,58 @@ func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 	})
 }
 
+func UpdateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
+	type input struct {
+		Name     *string        `json:"name"`
+		Duration *time.Duration `json:"duration"`
+		Position *int16         `json:"position"`
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var input input
+
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		if err := helpers.ReadJSON(r.Body, &input); err != nil {
+			helpers.BadRequest(w, err.Error())
+			return
+		}
+
+		v = validation.New()
+		ValidateSectionName(v, input.Name)
+		ValidateDuration(v, input.Duration)
+		ValidatePosition(v, input.Position)
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		rows, err := queriesStore.UpdateSection(ctx, queries.UpdateSectionParams{
+			ID:       ID,
+			Name:     *input.Name,
+			Duration: *input.Duration,
+			Position: *input.Position,
+		})
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+		if rows == 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
 func DeleteSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ID, v := helpers.ParseID(r, "id")
