@@ -147,6 +147,36 @@ func (q *Queries) GetSectionsMetadata(ctx context.Context, presentationID int64)
 	return count, err
 }
 
+const patchSection = `-- name: PatchSection :execrows
+UPDATE section
+SET
+    name = COALESCE($1, name),
+    duration = COALESCE($2, duration),
+    position = COALESCE($3, position)
+WHERE
+    id = $4
+`
+
+type PatchSectionParams struct {
+	Name     *string        `json:"name"`
+	Duration *time.Duration `json:"duration"`
+	Position *int16         `json:"position"`
+	ID       int64          `json:"id"`
+}
+
+func (q *Queries) PatchSection(ctx context.Context, arg PatchSectionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, patchSection,
+		arg.Name,
+		arg.Duration,
+		arg.Position,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const updateSection = `-- name: UpdateSection :execrows
 UPDATE section
 SET

@@ -44,6 +44,15 @@ SET
 WHERE
     id = @id;
 --
+-- name: PatchSection :execrows
+UPDATE section
+SET
+    name = COALESCE(sqlc.narg(name), name),
+    duration = COALESCE(sqlc.narg(duration), duration),
+    position = COALESCE(sqlc.narg(position), position)
+WHERE
+    id = @id;
+--
 -- name: DeleteSection :execrows
 delete from section
 where id = @id
