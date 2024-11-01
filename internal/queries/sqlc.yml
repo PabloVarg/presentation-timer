@@ -15,3 +15,10 @@ sql:
             go_type:
               import: time
               type: Duration
+            nullable: false
+          - db_type: pg_catalog.interval
+            go_type:
+              import: time
+              type: Duration
+              pointer: true
+            nullable: true
