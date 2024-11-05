@@ -1,35 +1,35 @@
 ### Get all
-GET {{URL}}/presentations
+GET {{host}}/presentations
 
 ### Get one
-GET {{URL}}/presentations/35
+GET {{host}}/presentations/35
 
 ### Create
-POST {{URL}}/presentations
+POST {{host}}/presentations
 
 {
     "name": "my presentation"
 }
 
 ### Update
-PUT {{URL}}/presentations/74
+PUT {{host}}/presentations/74
 
 {
     "name": "my presentation 2"
 }
 
 ### Patch
-PATCH {{URL}}/presentations/74
+PATCH {{host}}/presentations/74
 
 {
     "name": "my presentation 2"
 }
 
 ### Patch nothing
-PATCH {{URL}}/presentations/74
+PATCH {{host}}/presentations/74
 
 {
 }
 
 ### Delete
-DELETE {{URL}}/presentations/70
+DELETE {{host}}/presentations/70

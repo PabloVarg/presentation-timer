@@ -1,11 +1,11 @@
 ### Get all
-GET {{URL}}/presentations/35/sections
+GET {{host}}/presentations/35/sections
 
 ### Get one
-GET {{URL}}/sections/13
+GET {{host}}/sections/13
 
 ### Create
-POST {{URL}}/presentations/35/sections
+POST {{host}}/presentations/35/sections
 
 {
     "name": "my section",
@@ -14,7 +14,7 @@ POST {{URL}}/presentations/35/sections
 }
 
 ### Update
-PUT {{URL}}/sections/17
+PUT {{host}}/sections/17
 
 {
     "name": "my section 2",
@@ -23,11 +23,11 @@ PUT {{URL}}/sections/17
 }
 
 ### Patch
-PATCH {{URL}}/sections/17
+PATCH {{host}}/sections/17
 
 {
     "position": 4
 }
 
 ### Delete
-DELETE {{URL}}/sections/16
+DELETE {{host}}/sections/16
