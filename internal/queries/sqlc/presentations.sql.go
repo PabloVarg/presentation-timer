@@ -7,6 +7,8 @@ package queries
 
 import (
 	"context"
+
+	"time"
 )
 
 const createPresentation = `-- name: CreatePresentation :one
@@ -52,12 +54,14 @@ func (q *Queries) GetPresentation(ctx context.Context, id int64) (Presentation, 
 }
 
 const getPresentations = `-- name: GetPresentations :many
-select id, name
+select presentation.id, presentation.name, coalesce(sum(section.duration), '0 seconds')::interval duration
 from presentation
+left join section on presentation.id = section.presentation
+group by presentation.id
 order by
     case when $1::text = 'ASC' and $2::text <> '' then $2 end asc,
     case when $1::text = 'DESC' and $2::text <> '' then $2 end desc,
-    id desc
+    presentation.id desc
 limit $4
 offset $3
 `
@@ -69,7 +73,13 @@ type GetPresentationsParams struct {
 	QueryLimit  int32  `json:"query_limit"`
 }
 
-func (q *Queries) GetPresentations(ctx context.Context, arg GetPresentationsParams) ([]Presentation, error) {
+type GetPresentationsRow struct {
+	ID       int64         `json:"id"`
+	Name     string        `json:"name"`
+	Duration time.Duration `json:"duration"`
+}
+
+func (q *Queries) GetPresentations(ctx context.Context, arg GetPresentationsParams) ([]GetPresentationsRow, error) {
 	rows, err := q.db.Query(ctx, getPresentations,
 		arg.Direction,
 		arg.SortBy,
@@ -80,10 +90,10 @@ func (q *Queries) GetPresentations(ctx context.Context, arg GetPresentationsPara
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Presentation
+	var items []GetPresentationsRow
 	for rows.Next() {
-		var i Presentation
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		var i GetPresentationsRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Duration); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

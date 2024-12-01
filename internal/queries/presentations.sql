@@ -1,10 +1,12 @@
 -- name: GetPresentations :many
-select *
+select presentation.*, coalesce(sum(section.duration), '0 seconds')::interval duration
 from presentation
+left join section on presentation.id = section.presentation
+group by presentation.id
 order by
     case when @direction::text = 'ASC' and @sort_by::text <> '' then @sort_by end asc,
     case when @direction::text = 'DESC' and @sort_by::text <> '' then @sort_by end desc,
-    id desc
+    presentation.id desc
 limit @query_limit
 offset @query_offset
 ;

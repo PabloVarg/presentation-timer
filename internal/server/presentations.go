@@ -20,8 +20,8 @@ var PresentationsSortFields = []string{"name"}
 
 func ListPresentationsHandler(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
 	type output struct {
-		Data     []queries.Presentation `json:"data"`
-		PageInfo filters.PageInfo       `json:"page_info"`
+		Data     []queries.GetPresentationsRow `json:"data"`
+		PageInfo filters.PageInfo              `json:"page_info"`
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
