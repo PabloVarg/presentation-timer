@@ -1,35 +1,42 @@
-### Get all
+# @name Get all
 GET {{host}}/presentations
+###
 
-### Get one
+# @name Get one
 GET {{host}}/presentations/35
+###
 
-### Create
+# @name Create
 POST {{host}}/presentations
 
 {
     "name": "my presentation"
 }
+###
 
-### Update
+# @name Update
 PUT {{host}}/presentations/74
 
 {
     "name": "my presentation 2"
 }
+###
 
-### Patch
+# @name Patch
 PATCH {{host}}/presentations/74
 
 {
     "name": "my presentation 2"
 }
+###
 
-### Patch nothing
+# @name Patch nothing
 PATCH {{host}}/presentations/74
 
 {
 }
+###
 
-### Delete
+# @name Delete
 DELETE {{host}}/presentations/70
+###

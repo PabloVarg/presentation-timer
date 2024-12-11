@@ -1,10 +1,12 @@
-### Get all
+# @name Get all
 GET {{host}}/presentations/35/sections
+###
 
-### Get one
+# @name Get one
 GET {{host}}/sections/13
+###
 
-### Create
+# @name Create
 POST {{host}}/presentations/35/sections
 
 {
@@ -12,8 +14,9 @@ POST {{host}}/presentations/35/sections
     "duration": 300000000000,
     "position": 1
 }
+###
 
-### Update
+# @name Update
 PUT {{host}}/sections/17
 
 {
@@ -21,13 +24,16 @@ PUT {{host}}/sections/17
     "duration": 600000000000,
     "position": 2
 }
+###
 
-### Patch
+# @name Patch
 PATCH {{host}}/sections/17
 
 {
     "position": 4
 }
+###
 
-### Delete
+# @name Delete
 DELETE {{host}}/sections/16
+###
