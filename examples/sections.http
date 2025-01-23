@@ -16,6 +16,15 @@ POST {{host}}/presentations/35/sections
 }
 ###
 
+# @name Create without position
+POST {{host}}/presentations/35/sections
+
+{
+    "name": "my section",
+    "duration": 300000000000
+}
+###
+
 # @name Update
 PUT {{host}}/sections/17
 
