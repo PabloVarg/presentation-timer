@@ -57,3 +57,9 @@ WHERE
 delete from section
 where id = @id
 ;
+--
+-- name: MaxPosition :one
+select coalesce(max(position), 0)::smallint
+from section
+where presentation = @presentation_id
+;

@@ -147,6 +147,19 @@ func (q *Queries) GetSectionsMetadata(ctx context.Context, presentationID int64)
 	return count, err
 }
 
+const maxPosition = `-- name: MaxPosition :one
+select coalesce(max(position), 0)::smallint
+from section
+where presentation = $1
+`
+
+func (q *Queries) MaxPosition(ctx context.Context, presentationID int64) (int16, error) {
+	row := q.db.QueryRow(ctx, maxPosition, presentationID)
+	var column_1 int16
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const patchSection = `-- name: PatchSection :execrows
 UPDATE section
 SET
