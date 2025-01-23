@@ -131,6 +131,16 @@ func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
+		if input.Position == nil {
+			position, err := queriesStore.MaxPosition(ctx, presentationID)
+			if err != nil {
+				helpers.InternalError(w, logger, err)
+				return
+			}
+
+			input.Position = &position
+		}
+
 		presentation, err := queriesStore.CreateSection(ctx, queries.CreateSectionParams{
 			Presentation: presentationID,
 			Name:         *input.Name,

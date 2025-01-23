@@ -27,10 +27,13 @@ func ValidateDuration(v validation.Validator, duration *time.Duration) {
 }
 
 func ValidatePosition(v validation.Validator, position *int16) {
+	if position == nil {
+		return
+	}
+
 	v.Check(
 		"position",
 		position,
-		validation.CheckPointerNotNil("position must be given"),
 		validation.IntCheckNatural("position can not be negative"),
 	)
 }
