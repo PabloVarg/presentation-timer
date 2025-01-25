@@ -20,6 +20,12 @@ env:
 psql:
 	@ docker compose exec -it db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
 
+.PHONY: migrations-create
+migrations-create:
+	@ echo -n "Migration name: " \
+		&& read name \
+		&& goose -s --dir ./migrations/ create "$$name" sql
+
 .PHONY: migrations-up
 migrations-up:
 	@ goose \
