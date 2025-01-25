@@ -11,6 +11,15 @@ import (
 	"time"
 )
 
+const cleanPositions = `-- name: CleanPositions :exec
+call clean_section_positions()
+`
+
+func (q *Queries) CleanPositions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, cleanPositions)
+	return err
+}
+
 const createSection = `-- name: CreateSection :one
 INSERT INTO section (
     presentation,

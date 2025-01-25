@@ -63,3 +63,6 @@ select coalesce(max(position), 0)::smallint
 from section
 where presentation = @presentation_id
 ;
+--
+-- name: CleanPositions :exec
+call clean_section_positions();
