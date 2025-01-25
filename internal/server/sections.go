@@ -38,7 +38,7 @@ func ListSectionsHandler(logger *slog.Logger, queriesStore *queries.Queries) htt
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		sections, err := queriesStore.GetSections(ctx, queries.GetSectionsParams{
@@ -77,7 +77,7 @@ func GetSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) http.
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		section, err := queriesStore.GetSection(ctx, ID)
