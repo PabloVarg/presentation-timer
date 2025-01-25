@@ -16,6 +16,10 @@ env:
 		| xargs -I {} basename --suffix "${ENV_SUFFIX}" {} \
 		| xargs -I {} cp --update=none "${ENV_DIR}/{}${ENV_SUFFIX}" "${ENV_DIR}/{}.env"
 
+.PHONY: psql
+psql:
+	@ docker compose exec -it db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
+
 .PHONY: migrations-up
 migrations-up:
 	@ goose \
