@@ -32,19 +32,23 @@ func run(logger *slog.Logger) {
 		return
 	}
 
-	queriesStore, conn, err := createQueries(ctx)
+	queriesStore, db, err := createQueries(ctx)
 	if err != nil {
 		logger.ErrorContext(ctx, "error connecting to DB", "err", err)
 		return
 	}
-	wg.Add(1)
 	defer func() {
-		defer wg.Done()
-
 		closeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		conn.Close(closeCtx)
+		db.Close(closeCtx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		server.RunTasks(ctx, logger, queriesStore)
 	}()
 
 	server.ListenAndServe(ctx, &wg, fmt.Sprintf(":%s", port), logger, queriesStore)
