@@ -37,3 +37,11 @@ func ValidatePosition(v validation.Validator, position *int16) {
 		validation.IntCheckNatural("position can not be negative"),
 	)
 }
+
+func ValidateMovement(v validation.Validator, move *int32) {
+	v.Check(
+		"move",
+		move,
+		validation.CheckPointerNotNil("move must be given"),
+	)
+}

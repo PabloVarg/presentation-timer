@@ -297,3 +297,52 @@ func DeleteSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 		w.WriteHeader(http.StatusOK)
 	})
 }
+
+func MoveSectionHandler(
+	logger *slog.Logger,
+	queriesStore *queries.Queries,
+) http.Handler {
+	type input struct {
+		Move *int32 `json:"move"`
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ID, v := helpers.ParseID(r, "id")
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		var input input
+		err := helpers.ReadJSON(r.Body, &input)
+		if err != nil {
+			helpers.BadRequest(w, err.Error())
+			return
+		}
+
+		v = validation.New()
+		ValidateMovement(v, input.Move)
+		if !v.Valid() {
+			helpers.UnprocessableContent(w, v.Errors())
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err = queriesStore.CleanPositionsBySectionGroup(ctx, ID)
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+
+		err = queriesStore.MoveSection(ctx, queries.MoveSectionParams{
+			ID:      ID,
+			Column2: *input.Move,
+		})
+		if err != nil {
+			helpers.InternalError(w, logger, err)
+			return
+		}
+	})
+}
