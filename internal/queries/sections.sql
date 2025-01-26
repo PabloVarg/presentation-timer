@@ -65,4 +65,5 @@ where presentation = @presentation_id
 ;
 --
 -- name: CleanPositions :exec
-call clean_section_positions();
+call clean_section_positions()
+;
