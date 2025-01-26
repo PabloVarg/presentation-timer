@@ -59,8 +59,13 @@ from presentation
 left join section on presentation.id = section.presentation
 group by presentation.id
 order by
-    case when $1::text = 'ASC' and $2::text <> '' then $2 end asc,
-    case when $1::text = 'DESC' and $2::text <> '' then $2 end desc,
+    case
+        when $1::text = 'ASC' and $2::text = 'name' then presentation.name
+    end asc,
+    case
+        when $1::text = 'DESC' and $2::text = 'name'
+        then presentation.name
+    end desc,
     presentation.id desc
 limit $4
 offset $3

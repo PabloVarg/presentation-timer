@@ -79,3 +79,24 @@ where presentation = @presentation_id
 -- name: CleanPositions :exec
 call clean_section_positions()
 ;
+--
+-- name: CleanPositionsBySectionGroup :exec
+with
+    ordered as (
+        select id, row_number() over (order by position) as new_position
+        from section o
+        where o.presentation = (select i.presentation from section i where i.id = @id)
+    )
+    update section
+    set position = ordered.new_position
+from ordered
+where section.id = ordered.id
+;
+--
+-- name: MoveSection :exec
+update section s
+set position = case when s.id <> $1 then position - ($2::int / abs($2)) when id = $1 then position + $2 end
+where position between least(position + $2, position) and greatest(position + $2, position) and presentation = (
+    select sp.presentation from section sp where sp.id = $1
+)
+;

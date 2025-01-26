@@ -20,6 +20,24 @@ func (q *Queries) CleanPositions(ctx context.Context) error {
 	return err
 }
 
+const cleanPositionsBySectionGroup = `-- name: CleanPositionsBySectionGroup :exec
+with
+    ordered as (
+        select id, row_number() over (order by position) as new_position
+        from section o
+        where o.presentation = (select i.presentation from section i where i.id = $1)
+    )
+    update section
+    set position = ordered.new_position
+from ordered
+where section.id = ordered.id
+`
+
+func (q *Queries) CleanPositionsBySectionGroup(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, cleanPositionsBySectionGroup, id)
+	return err
+}
+
 const createSection = `-- name: CreateSection :one
 INSERT INTO section (
     presentation,
@@ -96,19 +114,31 @@ select id, presentation, name, duration, position
 from section
 where presentation = $1
 order by
-    case when $2 = 'ASC' and $3 <> '' then $3 end asc,
-    case when $2 = 'DESC' and $3 <> '' then $3 end desc,
+    case when $2::text = 'ASC' and $3::text = 'name' then name end asc,
+    case when $2::text = 'DESC' and $3::text = 'name' then name end desc,
+    case
+        when $2::text = 'ASC' and $3::text = 'duration' then duration
+    end asc,
+    case
+        when $2::text = 'DESC' and $3::text = 'duration' then duration
+    end desc,
+    case
+        when $2::text = 'ASC' and $3::text = 'position' then position
+    end asc,
+    case
+        when $2::text = 'DESC' and $3::text = 'position' then position
+    end desc,
     id desc
 limit $5
 offset $4
 `
 
 type GetSectionsParams struct {
-	PresentationID int64       `json:"presentation_id"`
-	Direction      interface{} `json:"direction"`
-	SortBy         interface{} `json:"sort_by"`
-	QueryOffset    int32       `json:"query_offset"`
-	QueryLimit     int32       `json:"query_limit"`
+	PresentationID int64  `json:"presentation_id"`
+	Direction      string `json:"direction"`
+	SortBy         string `json:"sort_by"`
+	QueryOffset    int32  `json:"query_offset"`
+	QueryLimit     int32  `json:"query_limit"`
 }
 
 func (q *Queries) GetSections(ctx context.Context, arg GetSectionsParams) ([]Section, error) {
@@ -167,6 +197,24 @@ func (q *Queries) MaxPosition(ctx context.Context, presentationID int64) (int16,
 	var column_1 int16
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const moveSection = `-- name: MoveSection :exec
+update section s
+set position = case when s.id <> $1 then position - ($2::int / abs($2)) when id = $1 then position + $2 end
+where position between least(position + $2, position) and greatest(position + $2, position) and presentation = (
+    select sp.presentation from section sp where sp.id = $1
+)
+`
+
+type MoveSectionParams struct {
+	ID      int64 `json:"id"`
+	Column2 int32 `json:"column_2"`
+}
+
+func (q *Queries) MoveSection(ctx context.Context, arg MoveSectionParams) error {
+	_, err := q.db.Exec(ctx, moveSection, arg.ID, arg.Column2)
+	return err
 }
 
 const patchSection = `-- name: PatchSection :execrows
