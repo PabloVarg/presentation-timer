@@ -17,8 +17,14 @@ func routes(logger *slog.Logger, queries *queries.Queries) *http.ServeMux {
 	mux.Handle("PATCH /presentations/{id}", PatchPresentationHandler(logger, queries))
 	mux.Handle("DELETE /presentations/{id}", DeletePresentationHandler(logger, queries))
 
-	mux.Handle("GET /presentations/{presentation_id}/sections", ListSectionsHandler(logger, queries))
-	mux.Handle("POST /presentations/{presentation_id}/sections", CreateSectionHandler(logger, queries))
+	mux.Handle(
+		"GET /presentations/{presentation_id}/sections",
+		ListSectionsHandler(logger, queries),
+	)
+	mux.Handle(
+		"POST /presentations/{presentation_id}/sections",
+		CreateSectionHandler(logger, queries),
+	)
 
 	mux.Handle("GET /sections/{id}", GetSectionHandler(logger, queries))
 	mux.Handle("DELETE /sections/{id}", DeleteSectionHandler(logger, queries))
