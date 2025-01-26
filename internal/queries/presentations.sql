@@ -4,8 +4,13 @@ from presentation
 left join section on presentation.id = section.presentation
 group by presentation.id
 order by
-    case when @direction::text = 'ASC' and @sort_by::text <> '' then @sort_by end asc,
-    case when @direction::text = 'DESC' and @sort_by::text <> '' then @sort_by end desc,
+    case
+        when @direction::text = 'ASC' and @sort_by::text = 'name' then presentation.name
+    end asc,
+    case
+        when @direction::text = 'DESC' and @sort_by::text = 'name'
+        then presentation.name
+    end desc,
     presentation.id desc
 limit @query_limit
 offset @query_offset
