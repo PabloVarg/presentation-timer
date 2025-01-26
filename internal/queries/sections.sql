@@ -3,8 +3,20 @@ select *
 from section
 where presentation = @presentation_id
 order by
-    case when @direction = 'ASC' and @sort_by <> '' then @sort_by end asc,
-    case when @direction = 'DESC' and @sort_by <> '' then @sort_by end desc,
+    case when @direction::text = 'ASC' and @sort_by::text = 'name' then name end asc,
+    case when @direction::text = 'DESC' and @sort_by::text = 'name' then name end desc,
+    case
+        when @direction::text = 'ASC' and @sort_by::text = 'duration' then duration
+    end asc,
+    case
+        when @direction::text = 'DESC' and @sort_by::text = 'duration' then duration
+    end desc,
+    case
+        when @direction::text = 'ASC' and @sort_by::text = 'position' then position
+    end asc,
+    case
+        when @direction::text = 'DESC' and @sort_by::text = 'position' then position
+    end desc,
     id desc
 limit @query_limit
 offset @query_offset
