@@ -46,3 +46,11 @@ PATCH {{host}}/sections/17
 # @name Delete
 DELETE {{host}}/sections/16
 ###
+
+# @name Move
+POST {{host}}/sections/16/move
+
+{
+    "diff": -3
+}
+###
