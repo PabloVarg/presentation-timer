@@ -139,6 +139,7 @@ func CreateSectionHandler(logger *slog.Logger, queriesStore *queries.Queries) ht
 			}
 
 			input.Position = &position
+			*input.Position += 1
 		}
 
 		presentation, err := queriesStore.CreateSection(ctx, queries.CreateSectionParams{
