@@ -7,8 +7,7 @@ include configs/envs/db.env
 
 .PHONY: dev-start
 dev-start:
-	@ docker compose up --remove-orphans --build
-	@ docker compose down --remove-orphans
+	@ docker compose up --remove-orphans --build; docker compose down --remove-orphans
 
 .PHONY: env
 env:
