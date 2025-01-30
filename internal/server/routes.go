@@ -33,5 +33,7 @@ func routes(logger *slog.Logger, queries *queries.Queries) *http.ServeMux {
 
 	mux.Handle("POST /sections/{id}/move", MoveSectionHandler(logger, queries))
 
+	mux.Handle("/run/{id}", RunPresentation(logger, queries))
+
 	return mux
 }
