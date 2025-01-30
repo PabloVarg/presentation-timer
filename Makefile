@@ -17,7 +17,7 @@ env:
 
 .PHONY: psql
 psql:
-	@ docker compose exec -it db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
+	@ docker compose exec db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
 
 .PHONY: migrations-create
 migrations-create:
