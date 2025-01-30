@@ -109,6 +109,38 @@ func (q *Queries) GetSection(ctx context.Context, id int64) (Section, error) {
 	return i, err
 }
 
+const getSectionByPosition = `-- name: GetSectionByPosition :one
+with
+    ordered as (
+        select s.id, row_number() over (order by s.position) as new_position
+        from section s
+        where s.presentation = $1
+    )
+select id, presentation, name, duration, position
+from section o
+where
+    o.presentation = $1
+    and o.id = (select id from ordered where new_position = $2::int)
+`
+
+type GetSectionByPositionParams struct {
+	PresentationID int64 `json:"presentation_id"`
+	Step           int32 `json:"step"`
+}
+
+func (q *Queries) GetSectionByPosition(ctx context.Context, arg GetSectionByPositionParams) (Section, error) {
+	row := q.db.QueryRow(ctx, getSectionByPosition, arg.PresentationID, arg.Step)
+	var i Section
+	err := row.Scan(
+		&i.ID,
+		&i.Presentation,
+		&i.Name,
+		&i.Duration,
+		&i.Position,
+	)
+	return i, err
+}
+
 const getSections = `-- name: GetSections :many
 select id, presentation, name, duration, position
 from section

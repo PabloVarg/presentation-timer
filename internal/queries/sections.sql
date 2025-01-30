@@ -100,3 +100,17 @@ where position between least(position + $2, position) and greatest(position + $2
     select sp.presentation from section sp where sp.id = $1
 )
 ;
+--
+-- name: GetSectionByPosition :one
+with
+    ordered as (
+        select s.id, row_number() over (order by s.position) as new_position
+        from section s
+        where s.presentation = @presentation_id
+    )
+select *
+from section o
+where
+    o.presentation = @presentation_id
+    and o.id = (select id from ordered where new_position = @step::int)
+;
