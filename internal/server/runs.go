@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/PabloVarg/presentation-timer/internal/helpers"
@@ -62,9 +63,29 @@ func RunPresentation(logger *slog.Logger, queriesStore *queries.Queries) http.Ha
 				return
 			}
 
-			switch string(p) {
-			case "start":
-				runs[ID].StartPresentation()
+			fields := strings.Fields(string(p))
+			switch {
+			case fields[0] == "start":
+				runs[ID].SendMsg(StartPresentation)
+			case fields[0] == "pause":
+				runs[ID].SendMsg(PausePresentation)
+			case fields[0] == "resume":
+				runs[ID].SendMsg(ResumePresentation)
+			case fields[0] == "step":
+				if len(fields) != 2 {
+					continue
+				}
+
+				step, err := strconv.Atoi(fields[1])
+				if err != nil {
+					continue
+				}
+
+				runs[ID].SendMsg(StepInto, WithStep(int32(step)))
+			default:
+				conn.WriteJSON(map[string]any{
+					"error": "command not recognized",
+				})
 			}
 
 		}
@@ -74,22 +95,56 @@ func RunPresentation(logger *slog.Logger, queriesStore *queries.Queries) http.Ha
 type RunTask struct {
 	presentationID int64
 	logger         *slog.Logger
-	queriesStore   *queries.Queries
 	conns          map[string]*websocket.Conn
+	queriesStore   *queries.Queries
+	// sections
+	sections []queries.Section
 	// runs state
-	ctx    context.Context
-	cancel context.CancelFunc
-	timer  *time.Timer
-	step   int32
+	ctx            context.Context
+	cancel         context.CancelFunc
+	timer          *time.Timer
+	timerEnd       time.Time // Stores end of timer, for pause events
+	timerRemaining time.Duration
+	step           int32
+	msg            chan TaskMsg
 }
 
-func NewRun(presentationID int64, logger *slog.Logger, queriesStore *queries.Queries) RunTask {
-	return RunTask{
+type TaskMsg struct {
+	action     int
+	targetStep int32
+}
+
+const (
+	StartPresentation  = iota
+	PausePresentation  = iota
+	ResumePresentation = iota
+	StepInto
+)
+
+func NewRun(
+	presentationID int64,
+	logger *slog.Logger,
+	queriesStore *queries.Queries,
+) RunTask {
+	stoppedTimer := time.NewTimer(0)
+	stoppedTimer.Stop()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	task := RunTask{
 		presentationID: presentationID,
 		logger:         logger,
 		queriesStore:   queriesStore,
 		conns:          make(map[string]*websocket.Conn),
+		// runs state
+		ctx:    ctx,
+		cancel: cancel,
+		timer:  stoppedTimer,
+		msg:    make(chan TaskMsg),
 	}
+	go task.Run()
+
+	return task
 }
 
 func (t RunTask) AddConnection(ID string, conn *websocket.Conn) {
@@ -113,65 +168,105 @@ func (t RunTask) Terminated() bool {
 	return len(t.conns) == 0
 }
 
-func (t RunTask) StartPresentation() {
-	if t.ctx != nil {
-		t.cancel()
-	}
+func (t *RunTask) Run() {
+	t.logger.Info("pr run", "event", "coroutine started")
 
-	t.step = 0
-	t.timer = time.NewTimer(0)
-	t.ctx, t.cancel = context.WithCancel(context.Background())
-
-	t.logger.Info("runs start", "ID", t.presentationID)
-	go t.Run()
-}
-
-func (t RunTask) Run() {
 	for {
 		select {
 		case <-t.ctx.Done():
 			return
 		case <-t.timer.C:
+			t.logger.Info("pr run", "tick", "tock")
 			t.step += 1
-
-			dbCtx, cancel := context.WithTimeout(t.ctx, 5*time.Second)
-			section, err := t.queriesStore.GetSectionByPosition(
-				dbCtx,
-				queries.GetSectionByPositionParams{
-					PresentationID: t.presentationID,
-					Step:           t.step,
-				},
-			)
-			cancel()
-
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-					return
-				default:
-					return
-				}
+			if int(t.step) >= len(t.sections) {
+				t.timer.Stop()
+				t.Broadcast(map[string]any{
+					"status": "end",
+				})
+				continue
 			}
 
-			t.timer = time.NewTimer(section.Duration)
 			t.Broadcast(map[string]any{
-				"step":     section.ID,
-				"duration": section.Duration.String(),
+				"step": t.sections[t.step].Name,
 			})
-			t.logger.Info("step", "section", section)
+
+			t.timer = time.NewTimer(t.sections[t.step].Duration)
+			t.timerEnd = time.Now().Add(t.sections[t.step].Duration)
+		case msg := <-t.msg:
+			if err := t.HandleMsg(msg); err != nil {
+				t.Broadcast(map[string]any{
+					"error": err.Error(),
+				})
+			}
 		}
 	}
 }
 
-func (t RunTask) Broadcast(msg any) error {
+func (t *RunTask) HandleMsg(msg TaskMsg) error {
+	t.logger.Info("handle message", "msg", msg, "action", msg.action)
+
+	switch msg.action {
+	case StartPresentation:
+		t.logger.Info("handle message", "case", "start presentation")
+		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		sections, err := t.queriesStore.GetSectionsByPosition(dbCtx, t.presentationID)
+		if err != nil {
+			return err
+		}
+
+		t.sections = sections
+		t.step = -1
+		t.timer = time.NewTimer(0)
+	case PausePresentation:
+		t.logger.Info("handle message", "case", "pause presentation")
+		t.timerRemaining = t.timerEnd.Sub(time.Now())
+		t.timer.Stop()
+	case ResumePresentation:
+		t.logger.Info("handle message", "case", "resume presentation")
+		t.timer = time.NewTimer(t.timerRemaining)
+		t.timerEnd = time.Now().Add(t.timerRemaining)
+	case StepInto:
+		t.logger.Info("handle message", "case", "step presentation")
+		if msg.targetStep < 0 || int(msg.targetStep) >= len(t.sections) {
+			return fmt.Errorf("target step is not valid")
+		}
+
+		t.step = msg.targetStep - 1
+		t.timer = time.NewTimer(0)
+	}
+
+	return nil
+}
+
+func (t RunTask) SendMsg(action int, opts ...func(*TaskMsg)) {
+	msg := TaskMsg{
+		action: action,
+	}
+
+	for _, opt := range opts {
+		opt(&msg)
+	}
+
+	t.msg <- msg
+}
+
+func WithStep(step int32) func(*TaskMsg) {
+	return func(tm *TaskMsg) {
+		tm.targetStep = step
+	}
+}
+
+func (t RunTask) Broadcast(msg any) {
 	b, err := json.Marshal(msg)
 	if err != nil {
-		return err
+		t.logger.Error("ws broadcast", "err", err)
 	}
 
 	pm, err := websocket.NewPreparedMessage(websocket.BinaryMessage, b)
 	if err != nil {
-		return err
+		t.logger.Error("ws broadcast", "err", err)
 	}
 
 	g := new(errgroup.Group)
@@ -181,8 +276,6 @@ func (t RunTask) Broadcast(msg any) error {
 		})
 	}
 	if err := g.Wait(); err != nil {
-		return err
+		t.logger.Error("ws broadcast", "err", err)
 	}
-
-	return nil
 }
