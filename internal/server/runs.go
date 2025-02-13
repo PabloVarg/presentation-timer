@@ -188,12 +188,14 @@ func (t *RunTask) Run() {
 				continue
 			}
 
-			t.Broadcast(map[string]any{
-				"step": t.sections[t.step].Name,
-			})
-
 			t.timer = time.NewTimer(t.sections[t.step].Duration)
 			t.timerEnd = time.Now().Add(t.sections[t.step].Duration)
+
+			t.Broadcast(map[string]any{
+				"step":         t.sections[t.step].Name,
+				"finish_time":  t.timerEnd,
+				"remaining_ms": t.sections[t.step].Duration.Milliseconds(),
+			})
 		case msg := <-t.msg:
 			if err := t.HandleMsg(msg); err != nil {
 				t.RespondToMsg(msg, map[string]any{
@@ -225,6 +227,11 @@ func (t *RunTask) HandleMsg(msg TaskMsg) error {
 		t.logger.Info("handle message", "case", "pause presentation")
 		t.timerRemaining = t.timerEnd.Sub(time.Now())
 		t.timer.Stop()
+
+		t.Broadcast(map[string]any{
+			"step":         t.sections[t.step].Name,
+			"remaining_ms": t.sections[t.step].Duration.Milliseconds(),
+		})
 	case ResumePresentation:
 		t.logger.Info("handle message", "case", "resume presentation")
 		t.timer = time.NewTimer(t.timerRemaining)
