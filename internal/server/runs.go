@@ -183,7 +183,7 @@ func (t *RunTask) Run() {
 			if int(t.step) >= len(t.sections) {
 				t.timer.Stop()
 				t.Broadcast(map[string]any{
-					"status": "end",
+					"state": "end",
 				})
 				continue
 			}
@@ -229,13 +229,20 @@ func (t *RunTask) HandleMsg(msg TaskMsg) error {
 		t.timer.Stop()
 
 		t.Broadcast(map[string]any{
+			"state":        "paused",
 			"step":         t.sections[t.step].Name,
-			"remaining_ms": t.sections[t.step].Duration.Milliseconds(),
+			"remaining_ms": t.timerRemaining.Milliseconds(),
 		})
 	case ResumePresentation:
 		t.logger.Info("handle message", "case", "resume presentation")
 		t.timer = time.NewTimer(t.timerRemaining)
 		t.timerEnd = time.Now().Add(t.timerRemaining)
+
+		t.Broadcast(map[string]any{
+			"state":        "running",
+			"step":         t.sections[t.step].Name,
+			"remaining_ms": t.timerRemaining.Milliseconds(),
+		})
 	case StepInto:
 		t.logger.Info("handle message", "case", "step presentation")
 		if msg.targetStep < 0 || int(msg.targetStep) >= len(t.sections) {
