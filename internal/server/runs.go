@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -66,11 +67,11 @@ func RunPresentation(logger *slog.Logger, queriesStore *queries.Queries) http.Ha
 			fields := strings.Fields(string(p))
 			switch {
 			case fields[0] == "start":
-				runs[ID].SendMsg(StartPresentation)
+				runs[ID].SendMsg(StartPresentation, WithConn(conn))
 			case fields[0] == "pause":
-				runs[ID].SendMsg(PausePresentation)
+				runs[ID].SendMsg(PausePresentation, WithConn(conn))
 			case fields[0] == "resume":
-				runs[ID].SendMsg(ResumePresentation)
+				runs[ID].SendMsg(ResumePresentation, WithConn(conn))
 			case fields[0] == "step":
 				if len(fields) != 2 {
 					continue
@@ -81,7 +82,7 @@ func RunPresentation(logger *slog.Logger, queriesStore *queries.Queries) http.Ha
 					continue
 				}
 
-				runs[ID].SendMsg(StepInto, WithStep(int32(step)))
+				runs[ID].SendMsg(StepInto, WithStep(int32(step)), WithConn(conn))
 			default:
 				conn.WriteJSON(map[string]any{
 					"error": "command not recognized",
@@ -110,6 +111,7 @@ type RunTask struct {
 }
 
 type TaskMsg struct {
+	conn       *websocket.Conn
 	action     int
 	targetStep int32
 }
@@ -194,7 +196,7 @@ func (t *RunTask) Run() {
 			t.timerEnd = time.Now().Add(t.sections[t.step].Duration)
 		case msg := <-t.msg:
 			if err := t.HandleMsg(msg); err != nil {
-				t.Broadcast(map[string]any{
+				t.RespondToMsg(msg, map[string]any{
 					"error": err.Error(),
 				})
 			}
@@ -258,6 +260,12 @@ func WithStep(step int32) func(*TaskMsg) {
 	}
 }
 
+func WithConn(conn *websocket.Conn) func(*TaskMsg) {
+	return func(tm *TaskMsg) {
+		tm.conn = conn
+	}
+}
+
 func (t RunTask) Broadcast(msg any) {
 	b, err := json.Marshal(msg)
 	if err != nil {
@@ -277,5 +285,21 @@ func (t RunTask) Broadcast(msg any) {
 	}
 	if err := g.Wait(); err != nil {
 		t.logger.Error("ws broadcast", "err", err)
+	}
+}
+
+func (t RunTask) RespondToMsg(msg TaskMsg, message any) {
+	if msg.conn == nil {
+		return
+	}
+
+	if err := msg.conn.WriteJSON(message); err != nil {
+		switch {
+		case errors.Is(err, websocket.ErrCloseSent):
+			t.logger.Info("send response to closed conn", "message", msg, "response", message)
+			return
+		default:
+			t.logger.Error("failed to send ws response", "err", err)
+		}
 	}
 }
