@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -22,7 +21,7 @@ type RunStatusResponse struct {
 	Step   queries.Section `json:"step"`
 	MsLeft int64           `json:"ms_left"`
 	// errors
-	Err error `json:"error,omitempty"`
+	Err string `json:"error,omitempty"`
 }
 
 func RunPresentation(logger *slog.Logger, queriesStore *queries.Queries) http.Handler {
@@ -153,7 +152,6 @@ func NewRun(
 	queriesStore *queries.Queries,
 ) (RunTask, error) {
 	stoppedTimer := time.NewTimer(0)
-	stoppedTimer.Stop()
 
 	dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -169,10 +167,12 @@ func NewRun(
 		conns:          make(map[string]*websocket.Conn),
 		sections:       sections,
 		// runs state
-		ctx:    ctx,
-		cancel: cancel,
-		timer:  stoppedTimer,
-		msg:    make(chan TaskMsg),
+		isRunning: false,
+		ctx:       ctx,
+		cancel:    cancel,
+		timer:     stoppedTimer,
+		msg:       make(chan TaskMsg),
+		step:      -1,
 	}
 	go task.Run()
 
@@ -223,12 +223,19 @@ func (t *RunTask) Run() {
 			t.timer = time.NewTimer(t.sections[t.step].Duration)
 			t.timerEnd = time.Now().Add(t.sections[t.step].Duration)
 
+			if t.isRunning == false {
+				t.timeRemaining = t.timerEnd.Sub(time.Now())
+				t.timerEnd = time.Time{}
+				t.timer.Stop()
+			}
+
 			t.Broadcast(t.GetRunState())
 		case msg := <-t.msg:
 			if err := t.HandleMsg(msg); err != nil {
-				t.RespondToMsg(msg, map[string]any{
-					"error": err.Error(),
-				})
+				state := t.GetRunState()
+				state.Err = err.Error()
+
+				t.RespondToMsg(msg, state)
 			}
 		}
 	}
@@ -245,6 +252,7 @@ func (t *RunTask) HandleMsg(msg TaskMsg) error {
 		t.step = -1
 		t.timer = time.NewTimer(0)
 		t.isRunning = true
+		t.timeRemaining = 0
 	case PausePresentation:
 		t.logger.Info("handle message", "case", "pause presentation")
 		if t.timeRemaining == 0 {
@@ -268,7 +276,7 @@ func (t *RunTask) HandleMsg(msg TaskMsg) error {
 	case StepInto:
 		t.logger.Info("handle message", "case", "step presentation")
 		if msg.targetStep < 0 || int(msg.targetStep) >= len(t.sections) {
-			return fmt.Errorf("target step is not valid")
+			msg.targetStep = min(int32(len(t.sections)-1), max(int32(0), msg.targetStep))
 		}
 
 		t.step = msg.targetStep - 1
